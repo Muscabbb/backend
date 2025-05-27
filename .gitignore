@@ -1,0 +1,55 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# VS Code settings
+.vscode/
+
+# Mac and system files
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+
+# Log files
+*.log
+
+# Compiled Cython files
+*.so
+
+# Mypy cache
+.mypy_cache/
+
+# Pytest cache
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.cache
+
+# Static and media (if using)
+staticfiles/
+media/
+
+# Model files
+*.pkl
+*.joblib
+
+# Elasticsearch logs (optional)
+es_logs/
+
+# __init__.py backup or test files

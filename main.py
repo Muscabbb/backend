@@ -123,7 +123,7 @@ async def get_product_by_id(product_id: str):
         response = client.search(index="hekto", body={
             "query": {
                 "term": {
-                    "ProductID.keyword": product_id # Use .keyword for exact string match on ProductID
+                    "id": product_id # Use .keyword for exact string match on ProductID
                 }
             }
         })
@@ -161,7 +161,7 @@ async def get_latest_products(limit: int = 10):
                 "match_all": {}
             },
             "sort": [
-                {"SearchTimestamp": {"order": "desc"}} # Assuming 'SearchTimestamp' or similar for latest
+                {"timestamp": {"order": "desc"}} # Assuming 'SearchTimestamp' or similar for latest
             ],
             "size": limit
         }
