@@ -4,9 +4,13 @@
 from elasticsearch import Elasticsearch
 import pandas as pd # Assuming you use pandas to load your CSV data
 
-ELASTICSEARCH_URL = "https://my-elasticsearch-project-b5135b.es.us-east-1.aws.elastic.cloud:443"
-ELASTICSEARCH_API_KEY = "ZEZDeTlwWUJUY296R0V3cmdPT1k6N2RucGJ6dkExaTFpclJUWW5jUElxdw==" # <-- Use your actual API key
+
+ELASTICSEARCH_URL = "https://44c8ff7228b644abb7b6f3f7b0d8b78c.us-central1.gcp.cloud.es.io:443"
+ELASTICSEARCH_API_KEY = "eFRTdkhKY0JHVGNxQ1dOUVRmaVM6V2RNckVqQVlsbTZXNEh1Z1JSUjVvZw=="
 INDEX_NAME = "hekto"
+
+
+
 PRODUCTS_CSV_PATH = "products.csv" # <-- Path to your product data CSV
 
 def get_elasticsearch_client():

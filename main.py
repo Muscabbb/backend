@@ -8,7 +8,7 @@ import os
 
 # Import modules
 from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query
-from queryParser import FastQueryParser # Renamed from queryParser
+from queryParser import FastQueryParser # <--- KEEP THIS LINE! This is essential for unpickling.
 from data_loader import load_product_data
 from recommender_model import load_data_from_mongodb, build_model, recommend_products_for_user # New imports
 
@@ -29,6 +29,7 @@ MODELS_DIR = "models"
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # 1. Initialize and Load Query Parser
+# The type hint refers to the class you're importing, which is now correct.
 parser: Union[FastQueryParser, None] = None
 query_parser_pickle_path = os.path.join(MODELS_DIR, "query_parser.pkl")
 
@@ -36,10 +37,14 @@ try:
     if os.path.exists(query_parser_pickle_path):
         print("Attempting to load pickled Query Parser...")
         with open(query_parser_pickle_path, "rb") as f:
+            # This line will now correctly find queryParser.FastQueryParser
+            # because you've imported FastQueryParser from queryParser.
             parser = pickle.load(f)
         print("Query Parser loaded from pickle.")
     else:
-        print("Pickled Query Parser not found. Initializing new parser...")
+        # This 'else' block is for creating the parser if the pickle doesn't exist.
+        # It relies on FastQueryParser being imported.
+        print("Pickled Query Parser not found. Initializing new parser and pickling it...")
         product_data = load_product_data('products.csv') # Ensure correct path
         parser = FastQueryParser(product_data)
         with open(query_parser_pickle_path, "wb") as f:
@@ -94,7 +99,7 @@ class RecommendRequest(BaseModel):
 async def parse_and_search_endpoint(request: QueryRequest):
     try:
         if parser is None:
-             raise HTTPException(status_code=500, detail="Query Parser is not initialized.")
+            raise HTTPException(status_code=500, detail="Query Parser is not initialized.")
 
         parsed_query = parser.parse_query(request.query)
         print("PARSED QUERY:", parsed_query)

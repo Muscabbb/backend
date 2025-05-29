@@ -5,9 +5,10 @@ import pandas as pd # Import pandas for robust date parsing, if you used it befo
 
 # Connect to Elasticsearch
 client = Elasticsearch(
-    "https://my-elasticsearch-project-b5135b.es.us-east-1.aws.elastic.cloud:443",
-    api_key="ZEZDeTlwWUJUY296R0V3cmdPT1k6N2RucGJ6dkExaTFpclJUWW5jUElxdw==" # Use your actual API key
+    "https://44c8ff7228b644abb7b6f3f7b0d8b78c.us-central1.gcp.cloud.es.io:443",
+    api_key="eFRTdkhKY0JHVGNxQ1dOUVRmaVM6V2RNckVqQVlsbTZXNEh1Z1JSUjVvZw==" # Use your actual API key
 )
+
 
 index_name = "hekto"
 json_file_path = "C:/Users/hp/Downloads/Products/test.json" # Your JSON file

@@ -12,6 +12,7 @@ class FastQueryParser:
 
         Args:
             data (dict): Dictionary containing loaded product data from dataloader.py.
+                         This will still provide categories for semantic matching and brands.
             category_model_name (str): Name of the SentenceTransformer model.
         """
 
@@ -20,8 +21,8 @@ class FastQueryParser:
         if torch.cuda.is_available():
             self.category_model = self.category_model.to('cuda')
 
-        # Categories and simplified categories (populated from data_loader)
-        self.master_categories: List[str] = data.get('master_categories', []) # Type hint and default
+        # Categories and simplified categories (populated from data_loader - STILL NEEDED)
+        self.master_categories: List[str] = data.get('master_categories', [])
         self.sub_categories: List[str] = data.get('sub_categories', [])
         self.article_types: List[str] = data.get('article_types', [])
         self.categories: List[str] = list(set(self.sub_categories + self.article_types + self.master_categories))
@@ -30,7 +31,9 @@ class FastQueryParser:
         # Encode the simplified categories ONCE in the constructor
         self.category_embeddings = self.encode_categories()
 
-        # Known brands (populated from data_loader - static list remains here)
+        # Known brands (populated from data_loader)
+        # Note: Your current data_loader.py has extract_brands which processes productDisplayName
+        # This list below is the one you already have static in the file. Keep it.
         brands = [
             "nike", "adidas", "puma", "reebok", "new balance", "asics", "vans", "converse", "skechers",
             "jordan", "yeezy", "fendi", "gucci", "prada", "versace", "burberry", "chanel", "dior", "armani",
@@ -55,11 +58,21 @@ class FastQueryParser:
         self.known_brands = [brand.lower() for brand in brands]
         self.normalized_brands = [re.sub(r'[^\w\s]', '', brand) for brand in self.known_brands]
 
-        # --- REVERTED: Now takes colors from data_loader, which provides the comprehensive list ---
-        self.color_keywords: List[str] = [c.lower() for c in data.get('base_colors', []) if isinstance(c, str)]
-        # --- END REVERTION ---
+        # --- MANUAL LISTS FOR COLORS AND SEASONS ---
+        # These are now hardcoded and do NOT rely on data_loader for this info.
+        self.color_keywords: List[str] = [
+            "black", "white", "red", "blue", "green", "yellow", "orange", "purple", "pink",
+            "brown", "grey", "gray", "silver", "gold", "navy", "maroon", "olive", "beige",
+            "teal", "magenta", "cyan", "lime", "indigo", "violet", "turquoise", "khaki",
+            "cream", "burgundy", "lavender", "peach", "tan", "charcoal", "forest green",
+            "sky blue", "royal blue", "light blue", "dark blue", "light green", "dark green",
+            "rose gold", "coral", "fuchsia"
+        ]
+        self.season_tags: List[str] = [
+            "spring", "summer", "fall", "autumn", "winter" # "fall" and "autumn" for robustness
+        ]
+        # --- END MANUAL LISTS ---
 
-        self.season_tags: List[str] = [s.lower() for s in data.get('seasons', []) if isinstance(s, str)]
         self.usage_keywords: List[str] = [u.lower() for u in data.get('usage', []) if isinstance(u, str)]
 
         # Compile regex for price extraction ONCE
@@ -145,16 +158,15 @@ class FastQueryParser:
         elif category_type == "masterCategory" and best_match:
             result["masterCategory"] = best_match
 
-        # --- Color Matching ---
-        # This logic is correct and will now work because self.color_keywords will be a clean, lowercase list
+        # --- Color Matching (now using hardcoded list) ---
         matched_colors = {color for color in self.color_keywords if isinstance(color, str) and color in lowered_query}
         result["colors"] = list(matched_colors)
 
-        # --- Season Tag Extraction ---
+        # --- Season Tag Extraction (now using hardcoded list) ---
         matched_seasons = {tag for tag in self.season_tags if isinstance(tag, str) and tag in lowered_query}
         result["seasons"] = list(matched_seasons)
 
-        # --- Usage Extraction ---
+        # --- Usage Extraction (still dynamic from data_loader) ---
         result["usage"] = None
         for usage in self.usage_keywords:
             if isinstance(usage, str) and usage in lowered_query:
@@ -162,4 +174,3 @@ class FastQueryParser:
                 break
 
         return result
-    

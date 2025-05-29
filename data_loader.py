@@ -18,7 +18,7 @@ def load_product_data(csv_file='products.csv'):
         'sub_categories': df['subCategory'].unique().tolist(),
         'article_types': df['articleType'].unique().tolist(),
         # --- YOUR EXCELLENT SUGGESTION: HARDCODED COMPREHENSIVE COLORS ---
-        'base_colors': df['gender'].unique().tolist(),
+        'base_colors': df['baseColour'].unique().tolist(),
         # --- END OF SUGGESTED CHANGE ---
         'seasons': df['season'].unique().tolist(), # Still dynamically loaded
         'brands': extract_brands(df), # Still dynamically loaded

@@ -1,9 +1,10 @@
-from typing import Dict, List
+# elasticsearch_utils.py
+from typing import Dict, List, Union
 from elasticsearch import Elasticsearch
 
-ELASTICSEARCH_URL = "https://my-elasticsearch-project-b5135b.es.us-east-1.aws.elastic.cloud:443"
-ELASTICSEARCH_API_KEY = "ZEZDeTlwWUJUY296R0V3cmdPT1k6N2RucGJ6dkExaTFpclJUWW5jUElxdw=="
-INDEX_NAME = "hekto"  # Assuming you've created an index named "products" with relevant mappings
+ELASTICSEARCH_URL = "https://44c8ff7228b644abb7b6f3f7b0d8b78c.us-central1.gcp.cloud.es.io:443"
+ELASTICSEARCH_API_KEY = "eFRTdkhKY0JHVGNxQ1dOUVRmaVM6V2RNckVqQVlsbTZXNEh1Z1JSUjVvZw=="
+INDEX_NAME = "hekto"
 
 def get_elasticsearch_client():
     try:
@@ -21,29 +22,44 @@ def get_elasticsearch_client():
 def build_elasticsearch_query(parsed_query: Dict) -> Dict:
     query = {"bool": {}}
     must_clauses = []
-    filter_clauses = []
+    filter_clauses = [] # Use filter for non-scoring exact matches, often for keywords/terms
 
-    # 1. Brand
+    # 1. Brand: Match within productDisplayName for brand names
     if parsed_query.get("brand"):
-        must_clauses.append({"match": {"productDisplayName": parsed_query["brand"]}})  # Search within productDisplayName
+        must_clauses.append({"match": {"productDisplayName": parsed_query["brand"]}})
 
-    # 2. Article Type
+    # 2. Article Type: Prefer matching on the dedicated 'articleType' field
+    # Assuming 'articleType' is a keyword field in ES, use .keyword for exact match
     if parsed_query.get("articleType"):
-        must_clauses.append({"match": {"productDisplayName": parsed_query["articleType"]}})
+        filter_clauses.append({"term": {"articleType": parsed_query["articleType"]}})
 
-    # 3. Colors
-    if parsed_query.get("colors"):
-        filter_clauses.append({"terms": {"baseColour": parsed_query["colors"]}})  # Assuming "baseColour" is the field
+    # 3. Colors: Take ONLY the first element from the array and use a single 'term' query
+    # Match against 'baseColour.keyword' as per your instruction
+    if parsed_query.get("colors") and parsed_query["colors"]: # Ensure list exists and is not empty
+        first_color = parsed_query["colors"][0]
+        filter_clauses.append({"term": {"baseColour": first_color.title()}}) # Assuming colors are case-insensitive, use title case for consistency
 
-    # 4. Price Range
-    if parsed_query.get("price_range"):
+
+    # 4. Seasons: Take ONLY the first element from the array and use a single 'term' query
+    # Match against 'season.keyword' as per your instruction
+    if parsed_query.get("seasons") and parsed_query["seasons"]: # Ensure list exists and is not empty
+        first_season = parsed_query["seasons"][0]
+        filter_clauses.append({"term": {"season": first_season.title()}}) # Assuming seasons are case-insensitive, use title case for consistency
+
+
+    # 5. Price Range
+    # Assuming price_range from parsed_query could be a dict like {"min": X, "max": Y}
+    # Or None if not parsed
+    price_range_data: Union[Dict, None] = parsed_query.get("price_range")
+    if isinstance(price_range_data, dict):
         range_query = {}
-        if "min" in parsed_query["price_range"]:
-            range_query["gte"] = parsed_query["price_range"]["min"]
-        if "max" in parsed_query["price_range"]:
-            range_query["lte"] = parsed_query["price_range"]["max"]
+        if "min" in price_range_data:
+            range_query["gte"] = price_range_data["min"]
+        if "max" in price_range_data:
+            range_query["lte"] = price_range_data["max"]
         if range_query:
-            filter_clauses.append({"range": {"price": range_query}})  # Assuming "price" is the field
+            filter_clauses.append({"range": {"price": range_query}})
+
 
     # Combine clauses
     if must_clauses:
@@ -51,10 +67,17 @@ def build_elasticsearch_query(parsed_query: Dict) -> Dict:
     if filter_clauses:
         query["bool"]["filter"] = filter_clauses
 
+    # If no specific clauses are generated, use a broader match on the original query
+    if not must_clauses and not filter_clauses:
+        query["bool"]["must"] = {"match": {"productDisplayName": parsed_query["original_query"]}}
+
     final_query = {
         "query": query,
-        "size": 10  # You can adjust the number of results
+        "size": 10
     }
+
+    # You can add a print statement here to debug the final query being returned
+    # print(f"DEBUG: Final ES Query built: {final_query}")
 
     return final_query
 
