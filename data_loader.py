@@ -18,13 +18,7 @@ def load_product_data(csv_file='products.csv'):
         'sub_categories': df['subCategory'].unique().tolist(),
         'article_types': df['articleType'].unique().tolist(),
         # --- YOUR EXCELLENT SUGGESTION: HARDCODED COMPREHENSIVE COLORS ---
-        'base_colors': [
-            "black", "white", "grey", "red", "blue", "green", "yellow", "orange", "purple", "pink",
-            "brown", "beige", "gold", "silver", "multicolour", "maroon", "navy blue", "olive", "peach",
-            "teal", "turquoise", "violet", "cream", "charcoal", "lime green", "mustard", "off white",
-            "rust", "tan", "sky blue", "dark blue", "light blue", "dark green", "light green",
-            "dark red", "light red", "rose gold", "burgundy", "indigo", "cyan", "magenta"
-        ],
+        'base_colors': df['gender'].unique().tolist(),
         # --- END OF SUGGESTED CHANGE ---
         'seasons': df['season'].unique().tolist(), # Still dynamically loaded
         'brands': extract_brands(df), # Still dynamically loaded
