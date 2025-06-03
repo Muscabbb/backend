@@ -178,7 +178,7 @@ async def get_latest_products(limit: int = 10):
         raise HTTPException(status_code=500, detail=f"Error fetching latest products: {e}")
 
 # --- NEW RECOMMENDATION ENDPOINT ---
-@app.post("/recommendations")
+@app.post("/rec")
 async def get_user_recommendations(request: RecommendRequest):
     if rec_model is None or rec_user_item_matrix is None:
         raise HTTPException(status_code=503, detail="Recommendation model not loaded or built. Check server logs.")
@@ -197,25 +197,36 @@ async def get_user_recommendations(request: RecommendRequest):
         # Optionally, fetch full product details for recommended ProductIDs from Elasticsearch
         recommended_products_details = []
         if client and recommendations:
-            # Construct a terms query for ProductIDs
-            es_reco_query = {
-                "query": {
-                    "terms": {
-                        "ProductID.keyword": recommendations # Assuming ProductID in ES matches recommender's ProductID
-                    }
-                },
-                "size": len(recommendations) # Fetch all recommended products
-            }
-            reco_response = client.search(index="hekto", body=es_reco_query)
-            recommended_products_details = [hit["_source"] for hit in reco_response["hits"]["hits"]]
-            # You might want to sort these to match the order of recommendations list
-            # Create a dictionary for quick lookup and then sort
-            details_map = {p['ProductID']: p for p in recommended_products_details if 'ProductID' in p}
-            sorted_details = [details_map[prod_id] for prod_id in recommendations if prod_id in details_map]
-            recommended_products_details = sorted_details
+            # --- START OF FIX ---
+            # 1. Convert recommended_product_ids from strings to integers
+            # 2. Change the Elasticsearch field name to "id"
+            recommended_int_ids = [int(p_id) for p_id in recommendations if p_id.isdigit()] # Convert to int, add safety check
+
+            if recommended_int_ids: # Only query if there are valid int IDs
+                es_reco_query = {
+                    "query": {
+                        "terms": {
+                            "id": recommended_int_ids # Changed field name to "id", using int values
+                        }
+                    },
+                    "size": len(recommended_int_ids) # Fetch all recommended products
+                }
+                # print(f"DEBUG: ES Recommendation Query: {es_reco_query}") # Good for debugging
+
+                reco_response = client.search(index="hekto", body=es_reco_query)
+                recommended_products_details = [hit["_source"] for hit in reco_response["hits"]["hits"]]
+
+                # You might want to sort these to match the order of recommendations list
+                # Create a dictionary for quick lookup and then sort by original order
+                # Use the original string IDs for mapping if your model uses strings for sorting,
+                # but ensure the lookup key is consistent with the ES data (int 'id')
+                details_map = {p['id']: p for p in recommended_products_details if 'id' in p}
+                sorted_details = [details_map[int(prod_id)] for prod_id in recommendations if int(prod_id) in details_map]
+                recommended_products_details = sorted_details
+            # --- END OF FIX ---
 
 
-        return {"status": "success", "recommended_product_ids": recommendations, "recommended_products_details": recommended_products_details}
+        return {"status": "success", "recommended_product_ids": recommendations, "products": recommended_products_details}
 
     except HTTPException as he:
         raise he # Re-raise HTTP exceptions directly

@@ -76,14 +76,14 @@ def build_model(df: pd.DataFrame) -> Tuple[Union[NearestNeighbors, None], Union[
     model = NearestNeighbors(
         metric='cosine',
         algorithm='brute',
-        n_neighbors=20
+        n_neighbors=2
     )
     model.fit(sparse_matrix)
 
     return model, user_item_matrix
 
 # Recommendation function
-def recommend_products_for_user(user_id: str, N: int = 5,
+def recommend_products_for_user(user_id: str, N: int = 15,
                                   model: Union[NearestNeighbors, None] = None,
                                   user_item_matrix: Union[pd.DataFrame, None] = None) -> Union[List[str], str]:
     
@@ -103,7 +103,7 @@ def recommend_products_for_user(user_id: str, N: int = 5,
     # Find similar users
     distances, indices = model.kneighbors(
         user_item_matrix.iloc[user_idx, :].values.reshape(1, -1),
-        n_neighbors=10 # Get 10 nearest neighbors
+        n_neighbors=2 # Get 10 nearest neighbors
     )
 
     # Get similar users' indices (excluding the user themselves if present)
