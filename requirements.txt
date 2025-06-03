@@ -1,11 +1,11 @@
 fastapi
-uvicorn # For running the FastAPI app
+uvicorn
 pydantic
 elasticsearch
 sentence-transformers
-torch # PyTorch, dependency of sentence-transformers
+torch
 rapidfuzz
 pandas
 scikit-learn
 scipy
-pymongo # For MongoDB connection
+pymongo
