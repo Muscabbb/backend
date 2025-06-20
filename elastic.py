@@ -5,13 +5,13 @@ import pandas as pd # Import pandas for robust date parsing, if you used it befo
 
 # Connect to Elasticsearch
 client = Elasticsearch(
-    "https://44c8ff7228b644abb7b6f3f7b0d8b78c.us-central1.gcp.cloud.es.io:443",
-    api_key="eFRTdkhKY0JHVGNxQ1dOUVRmaVM6V2RNckVqQVlsbTZXNEh1Z1JSUjVvZw==" # Use your actual API key
+    "https://390d86116dde42f0ae542ebb8f132b4c.us-central1.gcp.cloud.es.io:443",
+    api_key="ejV3S2ZwY0JpQ1JXSDdDUzZ4aWo6QWJUQk1pVVZTWUJmM2ppcVZUZ1Fadw=="
 )
 
 
 index_name = "hekto"
-json_file_path = "C:/Users/hp/Downloads/Products/test.json" # Your JSON file
+json_file_path = "C:/Users/hp/Downloads/Products/test.json"
 
 # --- IMPORTANT: Ensure your 'hekto' index has the correct date mapping before running this ---
 # If you haven't run the `create_index_with_mapping_and_index_data.py` script
