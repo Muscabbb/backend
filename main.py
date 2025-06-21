@@ -190,7 +190,7 @@ async def get_user_recommendations(request: RecommendRequest):
             model=rec_model,
             user_item_matrix=rec_user_item_matrix
         )
-
+        
         if isinstance(recommendations, str): # Error message from recommender_model
             raise HTTPException(status_code=404, detail=recommendations)
 
@@ -201,7 +201,8 @@ async def get_user_recommendations(request: RecommendRequest):
             # 1. Convert recommended_product_ids from strings to integers
             # 2. Change the Elasticsearch field name to "id"
             recommended_int_ids = [int(p_id) for p_id in recommendations if p_id.isdigit()] # Convert to int, add safety check
-
+            print(recommendations) # Debugging line to check IDs
+            print(recommended_int_ids) # Debugging line to check IDs
             if recommended_int_ids: # Only query if there are valid int IDs
                 es_reco_query = {
                     "query": {

@@ -38,7 +38,7 @@ def load_data_from_mongodb() -> pd.DataFrame:
         df = df.dropna(subset=['userId', 'productId', 'interactionType'])
         
         # Ensure integer type for interactionType
-        df['productId'] = df['productId'].astype(str)
+        df['productId'] = df['productId'].astype(int).astype(str)
         df['userId'] = df['userId'].astype(str)
         df['interactionType'] = df['interactionType'].astype(int)
 
