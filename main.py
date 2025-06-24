@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from typing import Dict, List, Union
 import pickle
 import os
+from mangum import Mangum
 
 # Import modules
 from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query
@@ -234,3 +235,12 @@ async def get_user_recommendations(request: RecommendRequest):
     except Exception as e:
         print(f"Error generating recommendations: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating recommendations: {e}")
+
+
+
+
+
+
+
+
+handler = Mangum(app)
