@@ -5,8 +5,8 @@ from elasticsearch import Elasticsearch
 import pandas as pd # Assuming you use pandas to load your CSV data
 
 
-ELASTICSEARCH_URL = "https://390d86116dde42f0ae542ebb8f132b4c.us-central1.gcp.cloud.es.io:443"
-ELASTICSEARCH_API_KEY = "ejV3S2ZwY0JpQ1JXSDdDUzZ4aWo6QWJUQk1pVVZTWUJmM2ppcVZUZ1Fadw=="
+ELASTICSEARCH_URL = "https://my-elasticsearch-project-c8976e.es.us-east-1.aws.elastic.cloud:443"
+ELASTICSEARCH_API_KEY = "RFZnNURaZ0J2dnM1dEx5Wm9TN1k6TTV4bzZZSlZYLTlDVFpUbEVfQ2x1dw=="
 INDEX_NAME = "hekto"
 
 

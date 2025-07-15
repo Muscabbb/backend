@@ -5,8 +5,8 @@ import pandas as pd # Import pandas for robust date parsing, if you used it befo
 
 # Connect to Elasticsearch
 client = Elasticsearch(
-    "https://390d86116dde42f0ae542ebb8f132b4c.us-central1.gcp.cloud.es.io:443",
-    api_key="ejV3S2ZwY0JpQ1JXSDdDUzZ4aWo6QWJUQk1pVVZTWUJmM2ppcVZUZ1Fadw=="
+    "https://my-elasticsearch-project-c8976e.es.us-east-1.aws.elastic.cloud:443",
+    api_key="RFZnNURaZ0J2dnM1dEx5Wm9TN1k6TTV4bzZZSlZYLTlDVFpUbEVfQ2x1dw=="
 )
 
 
