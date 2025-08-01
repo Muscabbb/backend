@@ -1,10 +1,15 @@
 # elasticsearch_utils.py
+import os
 from typing import Dict, List, Union
 from elasticsearch import Elasticsearch
+from dotenv import load_dotenv
 
-ELASTICSEARCH_URL = "https://my-elasticsearch-project-c8976e.es.us-east-1.aws.elastic.cloud:443"
-ELASTICSEARCH_API_KEY = "RFZnNURaZ0J2dnM1dEx5Wm9TN1k6TTV4bzZZSlZYLTlDVFpUbEVfQ2x1dw=="
-INDEX_NAME = "hekto"
+# Load environment variables from .env file
+load_dotenv()
+
+ELASTICSEARCH_URL = os.getenv("ELASTICSEARCH_URL")
+ELASTICSEARCH_API_KEY = os.getenv("ELASTICSEARCH_API_KEY")
+INDEX_NAME = os.getenv("INDEX_NAME")
 
 def get_elasticsearch_client():
     try:

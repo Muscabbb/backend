@@ -1,13 +1,17 @@
 # This is a separate Python script you would run independently
 # to set up your Elasticsearch index and load data.
 
+import os
 from elasticsearch import Elasticsearch
 import pandas as pd # Assuming you use pandas to load your CSV data
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
 
-ELASTICSEARCH_URL = "https://my-elasticsearch-project-c8976e.es.us-east-1.aws.elastic.cloud:443"
-ELASTICSEARCH_API_KEY = "RFZnNURaZ0J2dnM1dEx5Wm9TN1k6TTV4bzZZSlZYLTlDVFpUbEVfQ2x1dw=="
-INDEX_NAME = "hekto"
+ELASTICSEARCH_URL = os.getenv("ELASTICSEARCH_URL")
+ELASTICSEARCH_API_KEY = os.getenv("ELASTICSEARCH_API_KEY")
+INDEX_NAME = os.getenv("INDEX_NAME")
 
 
 

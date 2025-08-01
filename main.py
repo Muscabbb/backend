@@ -8,7 +8,7 @@ import os
 from mangum import Mangum
 
 # Import modules
-from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query
+from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query, INDEX_NAME
 from queryParser import FastQueryParser # <--- KEEP THIS LINE! This is essential for unpickling.
 from data_loader import load_product_data
 from recommender_model import load_data_from_mongodb, build_model, recommend_products_for_user # New imports
@@ -126,7 +126,7 @@ async def get_product_by_id(product_id: str):
         raise HTTPException(status_code=500, detail="Elasticsearch client not initialized.")
 
     try:
-        response = client.search(index="hekto", body={
+        response = client.search(index=INDEX_NAME, body={
             "query": {
                 "term": {
                     "id": product_id # Use .keyword for exact string match on ProductID
@@ -149,7 +149,7 @@ async def get_all_products():
         raise HTTPException(status_code=500, detail="Elasticsearch client not initialized.")
 
     try:
-        response = client.search(index="hekto", body={"query": {"match_all": {}}, "size":100})
+        response = client.search(index=INDEX_NAME, body={"query": {"match_all": {}}, "size":100})
         products = [hit["_source"] for hit in response["hits"]["hits"]]
         return {"status": "success", "products": products}
     except Exception as e:
@@ -172,7 +172,7 @@ async def get_latest_products(limit: int = 10):
             "size": limit
         }
 
-        response = client.search(index="hekto", body=es_query)
+        response = client.search(index=INDEX_NAME, body=es_query)
         products = [hit["_source"] for hit in response["hits"]["hits"]]
         return {"status": "success", "products": products}
     except Exception as e:
@@ -215,7 +215,7 @@ async def get_user_recommendations(request: RecommendRequest):
                 }
                 # print(f"DEBUG: ES Recommendation Query: {es_reco_query}") # Good for debugging
 
-                reco_response = client.search(index="hekto", body=es_reco_query)
+                reco_response = client.search(index=INDEX_NAME, body=es_reco_query)
                 recommended_products_details = [hit["_source"] for hit in reco_response["hits"]["hits"]]
 
                 # You might want to sort these to match the order of recommendations list
@@ -244,3 +244,5 @@ async def get_user_recommendations(request: RecommendRequest):
 
 
 handler = Mangum(app)
+
+#uvicorn main:app --reload

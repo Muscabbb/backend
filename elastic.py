@@ -1,16 +1,20 @@
+import os
 from elasticsearch import Elasticsearch, helpers, exceptions
 import json
 from datetime import datetime
 import pandas as pd # Import pandas for robust date parsing, if you used it before
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Connect to Elasticsearch
 client = Elasticsearch(
-    "https://my-elasticsearch-project-c8976e.es.us-east-1.aws.elastic.cloud:443",
-    api_key="RFZnNURaZ0J2dnM1dEx5Wm9TN1k6TTV4bzZZSlZYLTlDVFpUbEVfQ2x1dw=="
+    os.getenv("ELASTICSEARCH_URL"),
+    api_key=os.getenv("ELASTICSEARCH_API_KEY")
 )
 
-
-index_name = "hekto"
+index_name = os.getenv("INDEX_NAME")
 json_file_path = "C:/Users/hp/Downloads/Products/test.json"
 
 # --- IMPORTANT: Ensure your 'hekto' index has the correct date mapping before running this ---
