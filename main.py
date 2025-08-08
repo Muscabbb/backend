@@ -6,6 +6,7 @@ from typing import Dict, List, Union
 import pickle
 import os
 from mangum import Mangum
+import langid
 
 # Import modules
 from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query, INDEX_NAME
@@ -102,6 +103,14 @@ async def parse_and_search_endpoint(request: QueryRequest):
         if parser is None:
             raise HTTPException(status_code=500, detail="Query Parser is not initialized.")
 
+        # Validate that the query is in English
+        detected_lang, confidence = langid.classify(request.query)
+        if detected_lang != 'en':
+            raise HTTPException(
+                status_code=400, 
+                detail="Invalid language detected. Please submit your query in English only."
+            )
+
         parsed_query = parser.parse_query(request.query)
         print("PARSED QUERY:", parsed_query)
 
@@ -167,7 +176,7 @@ async def get_latest_products(limit: int = 10):
                 "match_all": {}
             },
             "sort": [
-                {"timestamp": {"order": "desc"}} # Assuming 'SearchTimestamp' or similar for latest
+                {"year": {"order": "desc"}} # Assuming 'SearchTimestamp' or similar for latest
             ],
             "size": limit
         }
@@ -246,3 +255,5 @@ async def get_user_recommendations(request: RecommendRequest):
 handler = Mangum(app)
 
 #uvicorn main:app --reload
+#uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
