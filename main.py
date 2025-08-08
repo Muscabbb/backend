@@ -6,13 +6,20 @@ from typing import Dict, List, Union
 import pickle
 import os
 from mangum import Mangum
-import langid
+try:
+    import langid
+    LANGID_AVAILABLE = True
+except ImportError:
+    LANGID_AVAILABLE = False
+    print("Warning: langid not installed. Language detection will be skipped.")
+
+
 
 # Import modules
 from elasticsearch_utils import get_elasticsearch_client, build_elasticsearch_query, execute_elasticsearch_query, INDEX_NAME
 from queryParser import FastQueryParser # <--- KEEP THIS LINE! This is essential for unpickling.
-from data_loader import load_product_data
-from recommender_model import load_data_from_mongodb, build_model, recommend_products_for_user # New imports
+from data_loader import load_product_data, check_exact_product_match
+from recommender_model import load_data_from_elasticsearch, build_model, recommend_products_for_user # New imports
 
 app = FastAPI()
 
@@ -36,24 +43,14 @@ parser: Union[FastQueryParser, None] = None
 query_parser_pickle_path = os.path.join(MODELS_DIR, "query_parser.pkl")
 
 try:
-    if os.path.exists(query_parser_pickle_path):
-        print("Attempting to load pickled Query Parser...")
-        with open(query_parser_pickle_path, "rb") as f:
-            # This line will now correctly find queryParser.FastQueryParser
-            # because you've imported FastQueryParser from queryParser.
-            parser = pickle.load(f)
-        print("Query Parser loaded from pickle.")
-    else:
-        # This 'else' block is for creating the parser if the pickle doesn't exist.
-        # It relies on FastQueryParser being imported.
-        print("Pickled Query Parser not found. Initializing new parser and pickling it...")
-        product_data = load_product_data('products.csv') # Ensure correct path
-        parser = FastQueryParser(product_data)
-        with open(query_parser_pickle_path, "wb") as f:
-            pickle.dump(parser, f)
-        print("New Query Parser initialized and pickled.")
+    # Always create a new parser instead of trying to load from pickle
+    # This avoids pickle deserialization issues
+    print("Initializing new Query Parser...")
+    product_data = load_product_data() # Now loads from Elasticsearch with CSV fallback
+    parser = FastQueryParser(product_data)
+    print("Query Parser initialized successfully.")
 except Exception as e:
-    print(f"Error initializing or loading Query Parser: {e}. Using a fallback DummyParser.")
+    print(f"Error initializing Query Parser: {e}. Using a fallback DummyParser.")
     class DummyParser:
         def parse_query(self, query: str) -> Dict:
             print("WARNING: Using DummyParser.")
@@ -67,8 +64,8 @@ rec_user_item_matrix = None
 
 # Recommendation model should also be initialized once at startup
 try:
-    print("Loading data for Recommendation Model from MongoDB...")
-    rec_df = load_data_from_mongodb()
+    print("Loading data for Recommendation Model from Elasticsearch...")
+    rec_df = load_data_from_elasticsearch()
     if not rec_df.empty:
         print("Building Recommendation Model...")
         rec_model, rec_user_item_matrix = build_model(rec_df)
@@ -77,9 +74,9 @@ try:
         else:
             print("Failed to build Recommendation Model due to empty data or other issues.")
     else:
-        print("No interaction data found in MongoDB. Recommendation model will not be active.")
+        print("No interaction data found in Elasticsearch. Recommendation model will not be active.")
 except Exception as e:
-    print(f"Error initializing Recommendation Model from MongoDB: {e}. Recommendations will not be available.")
+    print(f"Error initializing Recommendation Model from Elasticsearch: {e}. Recommendations will not be available.")
 
 
 # 3. Get Elasticsearch Client
@@ -93,7 +90,7 @@ class QueryRequest(BaseModel):
 
 class RecommendRequest(BaseModel):
     user_id: str
-    num_recommendations: int = 5
+    num_recommendations: int = 20
 
 # --- API ENDPOINTS ---
 
@@ -103,26 +100,50 @@ async def parse_and_search_endpoint(request: QueryRequest):
         if parser is None:
             raise HTTPException(status_code=500, detail="Query Parser is not initialized.")
 
-        # Validate that the query is in English
-        detected_lang, confidence = langid.classify(request.query)
-        if detected_lang != 'en':
-            raise HTTPException(
-                status_code=400, 
-                detail="Invalid language detected. Please submit your query in English only."
-            )
+        # Pre-validation: Check if query should be processed by parser
+        query = request.query.strip()
+        
+        # Check for exact product match first
+        has_exact_match = check_exact_product_match(query)
+        if has_exact_match:
+            validation_reason = "Exact product match found"
+            print(f"Query validation: {validation_reason}")
+        else:
+            # No exact match, check language
+            is_english = True  # Default fallback
+            if LANGID_AVAILABLE and len(query) >= 2:
+                try:
+                    detected_lang = langid.classify(query)
+                    is_english = detected_lang == 'en'
+                except Exception as e:
+                    print(f"Language detection failed: {e}. Assuming English.")
+                    is_english = True
+            
+            if is_english:
+                validation_reason = "Query is in English"
+                print(f"Query validation: {validation_reason}")
+            else:
+                validation_reason = "this language is not allowed pls use english"
+                print(f"Query rejected: {validation_reason}")
+                return {
+                    "status": "rejected", 
+                    "products": [], 
+                    "parsed_query": {},
+                    "reason": validation_reason
+                }
 
-        parsed_query = parser.parse_query(request.query)
-        print("PARSED QUERY:", parsed_query)
+        parsed_queries = parser.parse_query(request.query)
+        print("PARSED QUERIES:", parsed_queries)
 
         products = []
-        if client:
-            es_query = build_elasticsearch_query(parsed_query)
-            print("ELASTICSEARCH QUERY:", es_query)
-            products = execute_elasticsearch_query(client, es_query)
+        if parsed_queries:
+            # Execute separate queries for each parsed statement
+            products = execute_elasticsearch_query(parsed_queries)
+            print(f"FOUND {len(products)} PRODUCTS")
         else:
-            print("Elasticsearch client not available. Skipping search.")
+            print("No parsed queries. Skipping search.")
 
-        return {"status": "success", "products": products, "parsed_query": parsed_query}
+        return {"status": "success", "products": products, "parsed_query": parsed_queries}
 
     except Exception as e:
         print(f"Error during search: {e}")
