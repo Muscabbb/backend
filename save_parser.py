@@ -1,6 +1,6 @@
-from queryParser import FastQueryParser
+from queryParser import QueryParser
 import pickle
 
-parser = FastQueryParser()
+parser = QueryParser()
 with open("models/query_parser.pkl", "wb") as f:
     pickle.dump(parser, f)

@@ -164,51 +164,58 @@ def create_individual_queries(parsed_query: Dict) -> List[Dict]:
 
 def execute_elasticsearch_query(parsed_queries: List[Dict]) -> List[Dict]:
     """
-    Execute separate Elasticsearch queries for each parsed statement and combine results
+    Execute separate Elasticsearch queries for each classified query and return 10 products per query
     """
     client = get_elasticsearch_client()
     if not client:
         return []
+
+    query_results = []
     
-    all_products = []
-    
-    for parsed_query in parsed_queries:
-        # Create individual queries for each color-article type combination
-        individual_queries = create_individual_queries(parsed_query)
+    for index, parsed_query in enumerate(parsed_queries):
+        query_products = []
         
-        for individual_query in individual_queries:
-            query = build_elasticsearch_query(individual_query)
+        # Build the elasticsearch query for this classified query
+        query = build_elasticsearch_query(parsed_query)
+        # Limit to 10 products per query
+        query["size"] = 10
+        
+        try:
+            # Execute the search
+            response = client.search(index=INDEX_NAME, body=query)
             
-            try:
-                # Execute the search
-                response = client.search(index=INDEX_NAME, body=query)
+            # Extract products from response
+            hits = response.get('hits', {}).get('hits', [])
+            
+            for hit in hits:
+                source = hit['_source']
+                product = {
+                    "id": source.get('id'),
+                    "gender": source.get('gender'),
+                    "masterCategory": source.get('masterCategory'),
+                    "subCategory": source.get('subCategory'),
+                    "articleType": source.get('articleType'),
+                    "baseColour": source.get('baseColour'),
+                    "season": source.get('season'),
+                    "year": source.get('year'),
+                    "usage": source.get('usage'),
+                    "productDisplayName": source.get('productDisplayName'),
+                    "image": source.get('image'),
+                    "price": source.get('price'),
+                    "timestamp": source.get('timestamp')
+                }
+                query_products.append(product)
                 
-                # Extract products from response
-                hits = response.get('hits', {}).get('hits', [])
-                
-                for hit in hits:
-                    source = hit['_source']
-                    product = {
-                        "id": source.get('id'),
-                        "gender": source.get('gender'),
-                        "masterCategory": source.get('masterCategory'),
-                        "subCategory": source.get('subCategory'),
-                        "articleType": source.get('articleType'),
-                        "baseColour": source.get('baseColour'),
-                        "season": source.get('season'),
-                        "year": source.get('year'),
-                        "usage": source.get('usage'),
-                        "productDisplayName": source.get('productDisplayName'),
-                        "image": source.get('image'),
-                        "price": source.get('price'),
-                        "timestamp": source.get('timestamp')
-                    }
-                    # Avoid duplicates
-                    if not any(p.get('id') == product.get('id') for p in all_products if p.get('id')):
-                        all_products.append(product)
-                        
-            except Exception as e:
-                print(f"Error executing Elasticsearch query: {e}")
-                continue
+        except Exception as e:
+            print(f"Error executing Elasticsearch query for index {index}: {e}")
+            
+        # Add the results for this query with its index
+        query_result = {
+            "query_index": index,
+            "query_details": parsed_query,
+            "products": query_products,
+            "product_count": len(query_products)
+        }
+        query_results.append(query_result)
     
-    return all_products
+    return query_results

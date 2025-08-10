@@ -3,9 +3,9 @@ import pickle
 import os
 import sys
 
-# IMPORTANT: This import is crucial. It tells Python that FastQueryParser
+# IMPORTANT: This import is crucial. It tells Python that QueryParser
 # comes from the 'queryParser' module.
-from queryParser import FastQueryParser
+from queryParser import QueryParser
 from data_loader import load_product_data # Assuming this is correct
 
 # Define the models directory
@@ -26,18 +26,18 @@ try:
     product_data = load_product_data('products.csv')
     print("Product data loaded.")
 
-    print("Initializing FastQueryParser instance...")
-    parser_instance = FastQueryParser(product_data)
+    print("Initializing QueryParser instance...")
+    parser_instance = QueryParser(product_data)
 
     # THIS IS THE CRITICAL CHECK:
     # Verify that the class's module is correctly identified *before* pickling.
     # If this prints '__main__', there's a deeper issue with your module setup.
     print(f"DEBUG: Type of parser_instance: {type(parser_instance)}")
-    print(f"DEBUG: Module of FastQueryParser: {parser_instance.__class__.__module__}")
+    print(f"DEBUG: Module of QueryParser: {parser_instance.__class__.__module__}")
 
     if parser_instance.__class__.__module__ != 'queryParser':
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("!! WARNING: FastQueryParser is not correctly identified as !!")
+        print("!! WARNING: QueryParser is not correctly identified as !!")
         print(f"!!          coming from 'queryParser' module. It's: {parser_instance.__class__.__module__} !!")
         print("!!          Pickling it this way will likely cause the !!")
         print("!!          '__main__' unpickling error again. !!")
@@ -45,10 +45,10 @@ try:
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         sys.exit(1) # Exit if the module path is wrong
 
-    print(f"Pickling FastQueryParser to {query_parser_pickle_path}...")
+    print(f"Pickling QueryParser to {query_parser_pickle_path}...")
     with open(query_parser_pickle_path, "wb") as f:
         pickle.dump(parser_instance, f)
-    print("FastQueryParser pickled successfully!")
+    print("QueryParser pickled successfully!")
 
 except FileNotFoundError:
     print(f"Error: products.csv not found. Please ensure '{os.path.abspath('products.csv')}' exists.")
