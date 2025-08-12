@@ -115,7 +115,11 @@ def build_elasticsearch_query(parsed_query: Dict) -> Dict:
 
     final_query = {
         "query": query,
-        "size": 50
+        "size": 50,
+        "sort": [
+            {"year": {"order": "desc"}},
+            {"_score": {"order": "desc"}}
+        ]
     }
 
     # You can add a print statement here to debug the final query being returned
